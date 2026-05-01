@@ -53,6 +53,7 @@ make dev-frontend
 | `make dev` | Start everything |
 | `make test` | Run all Go tests |
 | `make build` | Build backend binary to `bin/server` |
+| `make build-cli` | Compile the Shush CLI locally to `cli/shush` |
 
 ## Project Structure
 

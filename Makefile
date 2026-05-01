@@ -44,3 +44,8 @@ test:
 # Build backend binary
 build:
 	cd backend && go build -o ../bin/server ./cmd/server
+
+# Build the CLI binary
+build-cli:
+	cd cli && go build -o shush main.go
+

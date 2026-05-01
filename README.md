@@ -24,7 +24,7 @@ Or step by step:
 docker compose up -d postgres
 
 # 2. Run database migrations
-export DATABASE_URL="postgres://vault:vault@localhost:5432/vault?sslmode=disable"
+export DATABASE_URL="postgres://shush:shush@localhost:5432/shush?sslmode=disable"
 make migrate-up
 
 # 3. Start backend (with hot-reload)

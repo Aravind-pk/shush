@@ -1,4 +1,14 @@
-.PHONY: proto migrate-up migrate-down dev-backend dev-frontend dev test build
+.PHONY: setup proto migrate-up migrate-down dev-backend dev-frontend dev test build
+
+# Load environment variables from .env if it exists
+-include .env
+export
+
+# Install all required CLI tools for local development
+setup:
+	go install github.com/bufbuild/buf/cmd/buf@latest
+	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	go install github.com/air-verse/air@latest
 
 # Generate Go code from .proto files using Buf
 proto:

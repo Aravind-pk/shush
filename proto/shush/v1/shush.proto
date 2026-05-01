@@ -1,0 +1,222 @@
+syntax = "proto3";
+
+package shush.v1;
+
+option go_package = "github.com/Aravind-pk/shush/backend/gen/shush/v1;shushv1";
+
+import "google/api/annotations.proto";
+
+// ---------------------------------------------------------------------------
+// Core Messages
+// ---------------------------------------------------------------------------
+
+message Secret {
+  string id          = 1;
+  string project_id  = 2;
+  string environment = 3;  // "dev" | "staging" | "prod"
+  string key         = 4;
+  string value       = 5;  // plaintext — only populated on Get, never stored
+  int32  version     = 6;
+  string created_by  = 7;
+  string created_at  = 8;
+  string updated_at  = 9;
+}
+
+message Project {
+  string id           = 1;
+  string name         = 2;
+  string org_id       = 3;
+  string created_at   = 4;
+}
+
+message AuditEntry {
+  string id          = 1;
+  string user_id     = 2;
+  string action      = 3;  // "read" | "write" | "delete"
+  string secret_key  = 4;
+  string project_id  = 5;
+  string environment = 6;
+  string ip_address  = 7;
+  string timestamp   = 8;
+}
+
+// ---------------------------------------------------------------------------
+// Auth Messages
+// ---------------------------------------------------------------------------
+
+message RegisterRequest {
+  string email    = 1;
+  string password = 2;
+}
+
+message RegisterResponse {
+  string user_id = 1;
+}
+
+message LoginRequest {
+  string email    = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token  = 1;
+  string refresh_token = 2;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message RefreshResponse {
+  string access_token = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Secret RPC Messages
+// ---------------------------------------------------------------------------
+
+message PutSecretRequest {
+  string project_id  = 1;
+  string environment = 2;
+  string key         = 3;
+  string value       = 4;
+}
+
+message PutSecretResponse {
+  string id      = 1;
+  int32  version = 2;
+}
+
+message GetSecretRequest {
+  string project_id  = 1;
+  string environment = 2;
+  string key         = 3;
+}
+
+message GetSecretResponse {
+  Secret secret = 1;
+}
+
+message ListSecretsRequest {
+  string project_id  = 1;
+  string environment = 2;
+}
+
+message ListSecretsResponse {
+  repeated Secret secrets = 1;  // 'repeated' = slice in Go
+}
+
+message DeleteSecretRequest {
+  string project_id  = 1;
+  string environment = 2;
+  string key         = 3;
+}
+
+message DeleteSecretResponse {}
+
+// ---------------------------------------------------------------------------
+// Project RPC Messages
+// ---------------------------------------------------------------------------
+
+message CreateProjectRequest {
+  string name = 1;
+}
+
+message CreateProjectResponse {
+  Project project = 1;
+}
+
+message ListProjectsRequest {}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Audit RPC Messages
+// ---------------------------------------------------------------------------
+
+message ListAuditRequest {
+  string project_id  = 1;
+  string environment = 2;
+  int32  limit       = 3;
+}
+
+message ListAuditResponse {
+  repeated AuditEntry entries = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Service Definition
+// ---------------------------------------------------------------------------
+
+service ShushService {
+  // Auth
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/register"
+      body: "*"
+    };
+  }
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/login"
+      body: "*"
+    };
+  }
+
+  rpc Refresh(RefreshRequest) returns (RefreshResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/refresh"
+      body: "*"
+    };
+  }
+
+  // Secrets
+  rpc PutSecret(PutSecretRequest) returns (PutSecretResponse) {
+    option (google.api.http) = {
+      put: "/v1/projects/{project_id}/environments/{environment}/secrets/{key}"
+      body: "*"
+    };
+  }
+
+  rpc GetSecret(GetSecretRequest) returns (GetSecretResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id}/environments/{environment}/secrets/{key}"
+    };
+  }
+
+  rpc ListSecrets(ListSecretsRequest) returns (ListSecretsResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id}/environments/{environment}/secrets"
+    };
+  }
+
+  rpc DeleteSecret(DeleteSecretRequest) returns (DeleteSecretResponse) {
+    option (google.api.http) = {
+      delete: "/v1/projects/{project_id}/environments/{environment}/secrets/{key}"
+    };
+  }
+
+  // Projects
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects"
+      body: "*"
+    };
+  }
+
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects"
+    };
+  }
+
+  // Audit
+  rpc ListAudit(ListAuditRequest) returns (ListAuditResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id}/audit"
+    };
+  }
+}

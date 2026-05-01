@@ -17,7 +17,7 @@ frontend/out/
 
 # === Generated code (re-create with `make proto`) ===
 backend/gen/
-docs/*.json
+docs/
 
 # === Environment & secrets ===
 .env
@@ -38,8 +38,6 @@ Thumbs.db
 # === Docker ===
 postgres_data/
 
-# === Local notes / plans ===
-local/
 
 # === Misc ===
 tmp/

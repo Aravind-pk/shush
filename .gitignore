@@ -1,0 +1,46 @@
+# === Go ===
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# === Node / Next.js ===
+node_modules/
+frontend/.next/
+frontend/out/
+.env*.local
+
+# === Generated code (re-create with `make proto`) ===
+backend/gen/
+docs/*.json
+
+# === Environment & secrets ===
+.env
+*.pem
+*.key
+
+# === OS junk ===
+.DS_Store
+Thumbs.db
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === Docker ===
+postgres_data/
+
+# === Local notes / plans ===
+local/
+
+# === Misc ===
+tmp/
+*.log

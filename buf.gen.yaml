@@ -1,0 +1,23 @@
+version: v2
+plugins:
+  # Generates Go structs from protobuf messages
+  - remote: buf.build/protocolbuffers/go
+    out: backend/gen
+    opt:
+      - paths=source_relative
+
+  # Generates gRPC server/client interfaces in Go
+  - remote: buf.build/grpc/go
+    out: backend/gen
+    opt:
+      - paths=source_relative
+
+  # Generates gRPC-Gateway REST reverse-proxy code
+  - remote: buf.build/grpc-ecosystem/gateway
+    out: backend/gen
+    opt:
+      - paths=source_relative
+
+  # Generates OpenAPI v2 spec (useful for exploring the API)
+  - remote: buf.build/grpc-ecosystem/openapiv2
+    out: docs

@@ -1,6 +1,10 @@
 # Shush 🤫
 
-A self-hosted secret manager, built with Go, gRPC, PostgreSQL, and Next.js.
+A self-hosted secret manager, built with Go (ConnectRPC), PostgreSQL, and Next.js.
+
+The API is defined once in protobuf and served via [ConnectRPC](https://connectrpc.com):
+a single handler speaks gRPC, gRPC-Web, and plain HTTP/JSON. The CLI talks gRPC, the
+dashboard and CI/SDKs use the HTTP/JSON API — no separate gateway proxy.
 
 ## Prerequisites
 
@@ -37,8 +41,7 @@ make dev-frontend
 | Service | URL |
 |---|---|
 | Frontend | http://localhost:3000 |
-| REST API (gRPC-Gateway) | http://localhost:8080 |
-| gRPC | localhost:9090 |
+| API (Connect: gRPC + HTTP/JSON) | http://localhost:8080 |
 | PostgreSQL | localhost:5432 |
 
 ## Makefile Commands
@@ -64,7 +67,7 @@ make dev-frontend
 │   ├── internal/
 │   │   ├── crypto/      # Envelope encryption (AES-256-GCM)
 │   │   ├── auth/        # JWT + RBAC
-│   │   ├── server/      # gRPC service handlers
+│   │   ├── server/      # Connect service handlers
 │   │   └── store/       # PostgreSQL repository layer
 │   └── migrations/      # SQL migration files
 ├── frontend/            # Next.js 14 dashboard

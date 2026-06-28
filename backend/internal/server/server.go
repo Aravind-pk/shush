@@ -79,9 +79,11 @@ func (s *Server) ListProjects(ctx context.Context, _ *connect.Request[shushv1.Li
 	return connect.NewResponse(&shushv1.ListProjectsResponse{Projects: out}), nil
 }
 
-// ListSecrets returns every secret for a project + environment, decrypted.
+// ListSecrets returns metadata (key + version) for a project + environment.
+// Plaintext values are never included — clients call GetSecret to reveal one
+// value at a time.
 //
-// Still TODO: verify the project belongs to the caller, and write an audit entry.
+// Still TODO: verify the project belongs to the caller.
 func (s *Server) ListSecrets(ctx context.Context, req *connect.Request[shushv1.ListSecretsRequest]) (*connect.Response[shushv1.ListSecretsResponse], error) {
 	if _, err := s.callerUserID(ctx); err != nil {
 		return nil, err
@@ -104,11 +106,45 @@ func (s *Server) ListSecrets(ctx context.Context, req *connect.Request[shushv1.L
 			ProjectId:   projectID,
 			Environment: env,
 			Key:         sec.Key,
-			Value:       sec.Value,
 			Version:     sec.Version,
 		})
 	}
 	return connect.NewResponse(&shushv1.ListSecretsResponse{Secrets: out}), nil
+}
+
+// GetSecret decrypts and returns one secret's value. This is the only RPC that
+// exposes plaintext, so reveals are explicit and one-at-a-time rather than the
+// whole project being decrypted on list.
+//
+// Still TODO: verify the project belongs to the caller, and write a `read`
+// audit entry (the point at which plaintext is disclosed).
+func (s *Server) GetSecret(ctx context.Context, req *connect.Request[shushv1.GetSecretRequest]) (*connect.Response[shushv1.GetSecretResponse], error) {
+	if _, err := s.callerUserID(ctx); err != nil {
+		return nil, err
+	}
+	m := req.Msg
+	if m.GetProjectId() == "" || m.GetEnvironment() == "" || m.GetKey() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("project_id, environment, and key are required"))
+	}
+
+	sec, err := s.store.GetSecret(ctx, m.GetProjectId(), m.GetEnvironment(), m.GetKey())
+	if errors.Is(err, store.ErrNotFound) {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("secret not found"))
+	}
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse(&shushv1.GetSecretResponse{
+		Secret: &shushv1.Secret{
+			ProjectId:   m.GetProjectId(),
+			Environment: m.GetEnvironment(),
+			Key:         sec.Key,
+			Value:       sec.Value,
+			Version:     sec.Version,
+		},
+	}), nil
 }
 
 // PutSecret encrypts and upserts a secret, attributed to the caller.

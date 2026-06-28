@@ -13,8 +13,13 @@ import (
 	"time"
 
 	"github.com/Aravind-pk/shush/backend/internal/crypto"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// ErrNotFound is returned when a requested row does not exist (e.g. GetSecret
+// for a key that isn't set). Callers map this to a 404 / NotFound status.
+var ErrNotFound = errors.New("store: not found")
 
 // Store wraps a pgx pool plus the master KEK used to wrap/unwrap secret DEKs.
 type Store struct {
@@ -50,13 +55,12 @@ func New(ctx context.Context, dsn string, kek []byte) (*Store, error) {
 // Close releases the connection pool. Safe to defer in main.
 func (s *Store) Close() { s.pool.Close() }
 
-// ListSecrets returns every secret for a project+environment, decrypted.
-//
-// It selects only the four ciphertext/nonce columns (never a plaintext column —
-// there isn't one), reconstructs the envelope, and decrypts each row.
+// ListSecrets returns metadata (key + version) for every secret in a
+// project+environment — never the plaintext values. Decryption only happens in
+// GetSecret, so listing a project doesn't expose (or even decrypt) any secrets.
 func (s *Store) ListSecrets(ctx context.Context, projectID, env string) ([]Secret, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT key, encrypted_value, data_nonce, encrypted_dek, dek_nonce, version
+		SELECT key, version
 		FROM secrets
 		WHERE project_id = $1 AND environment = $2
 		ORDER BY key`, projectID, env)
@@ -68,27 +72,50 @@ func (s *Store) ListSecrets(ctx context.Context, projectID, env string) ([]Secre
 	var out []Secret
 	for rows.Next() {
 		var (
-			key                 string
-			encValue, dataNonce []byte
-			encDEK, dekNonce    []byte
-			version             int32
+			key     string
+			version int32
 		)
-		if err := rows.Scan(&key, &encValue, &dataNonce, &encDEK, &dekNonce, &version); err != nil {
+		if err := rows.Scan(&key, &version); err != nil {
 			return nil, fmt.Errorf("store: scan secret: %w", err)
 		}
-
-		plaintext, err := crypto.Decrypt(s.kek, &crypto.EncryptedSecret{
-			EncryptedValue: encValue,
-			DataNonce:      dataNonce,
-			EncryptedDEK:   encDEK,
-			DEKNonce:       dekNonce,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("store: decrypt %q: %w", key, err)
-		}
-		out = append(out, Secret{Key: key, Value: plaintext, Version: version})
+		out = append(out, Secret{Key: key, Version: version})
 	}
 	return out, rows.Err()
+}
+
+// GetSecret returns a single secret's decrypted value. This is the only read
+// path that exposes plaintext: values are fetched on demand (e.g. a "reveal"
+// click) rather than streamed out for every key by ListSecrets. Returns
+// ErrNotFound if the key isn't set in that project+environment.
+func (s *Store) GetSecret(ctx context.Context, projectID, env, key string) (Secret, error) {
+	var (
+		encValue, dataNonce []byte
+		encDEK, dekNonce    []byte
+		version             int32
+	)
+	err := s.pool.QueryRow(ctx, `
+		SELECT encrypted_value, data_nonce, encrypted_dek, dek_nonce, version
+		FROM secrets
+		WHERE project_id = $1 AND environment = $2 AND key = $3`,
+		projectID, env, key,
+	).Scan(&encValue, &dataNonce, &encDEK, &dekNonce, &version)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Secret{}, ErrNotFound
+	}
+	if err != nil {
+		return Secret{}, fmt.Errorf("store: query secret: %w", err)
+	}
+
+	plaintext, err := crypto.Decrypt(s.kek, &crypto.EncryptedSecret{
+		EncryptedValue: encValue,
+		DataNonce:      dataNonce,
+		EncryptedDEK:   encDEK,
+		DEKNonce:       dekNonce,
+	})
+	if err != nil {
+		return Secret{}, fmt.Errorf("store: decrypt %q: %w", key, err)
+	}
+	return Secret{Key: key, Value: plaintext, Version: version}, nil
 }
 
 // PutSecret encrypts value and upserts it. A new key starts at version 1; an

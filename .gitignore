@@ -43,3 +43,6 @@ postgres_data/
 # === Misc ===
 tmp/
 *.log
+
+# Local-only scratch notes (plan, learning, walkthrough)
+local/

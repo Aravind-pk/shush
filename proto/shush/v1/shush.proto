@@ -41,37 +41,6 @@ message AuditEntry {
 }
 
 // ---------------------------------------------------------------------------
-// Auth Messages
-// ---------------------------------------------------------------------------
-
-message RegisterRequest {
-  string email    = 1;
-  string password = 2;
-}
-
-message RegisterResponse {
-  string user_id = 1;
-}
-
-message LoginRequest {
-  string email    = 1;
-  string password = 2;
-}
-
-message LoginResponse {
-  string access_token  = 1;
-  string refresh_token = 2;
-}
-
-message RefreshRequest {
-  string refresh_token = 1;
-}
-
-message RefreshResponse {
-  string access_token = 1;
-}
-
-// ---------------------------------------------------------------------------
 // Secret RPC Messages
 // ---------------------------------------------------------------------------
 
@@ -151,29 +120,8 @@ message ListAuditResponse {
 // ---------------------------------------------------------------------------
 
 service ShushService {
-  // Auth
-  rpc Register(RegisterRequest) returns (RegisterResponse) {
-    option (google.api.http) = {
-      post: "/v1/auth/register"
-      body: "*"
-    };
-  }
-
-  rpc Login(LoginRequest) returns (LoginResponse) {
-    option (google.api.http) = {
-      post: "/v1/auth/login"
-      body: "*"
-    };
-  }
-
-  rpc Refresh(RefreshRequest) returns (RefreshResponse) {
-    option (google.api.http) = {
-      post: "/v1/auth/refresh"
-      body: "*"
-    };
-  }
-
-  // Secrets
+  // Secrets. Identity comes from a Clerk session token (verified by the auth
+  // interceptor); Shush does not issue its own auth tokens.
   rpc PutSecret(PutSecretRequest) returns (PutSecretResponse) {
     option (google.api.http) = {
       put: "/v1/projects/{project_id}/environments/{environment}/secrets/{key}"

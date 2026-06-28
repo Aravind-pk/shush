@@ -10,9 +10,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Aravind-pk/shush/backend/internal/crypto"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -120,32 +120,68 @@ func (s *Store) PutSecret(ctx context.Context, projectID, env, key, value, creat
 	return id, version, nil
 }
 
-// EnsureDemoData find-or-creates a demo user and project so the secret RPCs
-// have valid foreign keys to reference before auth/projects RPCs exist.
-// Returns the demo user id and project id. Temporary — removed once Register
-// and CreateProject are implemented.
-func (s *Store) EnsureDemoData(ctx context.Context) (userID, projectID string, err error) {
-	// users.email is UNIQUE, so a real upsert works here.
-	err = s.pool.QueryRow(ctx, `
-		INSERT INTO users (email, password_hash, role)
-		VALUES ('demo@shush.local', 'x', 'admin')
-		ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
-		RETURNING id`).Scan(&userID)
-	if err != nil {
-		return "", "", fmt.Errorf("store: ensure demo user: %w", err)
-	}
+// Project is the domain view of a project row.
+type Project struct {
+	ID        string
+	Name      string
+	OwnerID   string
+	CreatedAt string
+}
 
-	// projects has no unique constraint on name, so find-then-insert.
-	err = s.pool.QueryRow(ctx,
-		`SELECT id FROM projects WHERE name = 'demo' AND owner_id = $1 LIMIT 1`, userID,
-	).Scan(&projectID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		err = s.pool.QueryRow(ctx,
-			`INSERT INTO projects (name, owner_id) VALUES ('demo', $1) RETURNING id`, userID,
-		).Scan(&projectID)
-	}
+// EnsureUser find-or-creates a local user row for a Clerk user id and returns
+// our internal user UUID. Called on each authenticated request to map the
+// Clerk identity onto a foreign-keyable users.id.
+//
+// Clerk session tokens don't carry an email by default, so we synthesize a
+// unique placeholder from the Clerk id to satisfy the NOT NULL/UNIQUE email
+// column. (A later pass can backfill the real email from the Clerk API.)
+func (s *Store) EnsureUser(ctx context.Context, clerkUserID string) (string, error) {
+	var id string
+	err := s.pool.QueryRow(ctx, `
+		INSERT INTO users (email, clerk_user_id, role)
+		VALUES ($1, $2, 'admin')
+		ON CONFLICT (clerk_user_id) DO UPDATE SET clerk_user_id = EXCLUDED.clerk_user_id
+		RETURNING id`, clerkUserID+"@clerk.local", clerkUserID).Scan(&id)
 	if err != nil {
-		return "", "", fmt.Errorf("store: ensure demo project: %w", err)
+		return "", fmt.Errorf("store: ensure user: %w", err)
 	}
-	return userID, projectID, nil
+	return id, nil
+}
+
+// CreateProject inserts a project owned by ownerID.
+func (s *Store) CreateProject(ctx context.Context, ownerID, name string) (Project, error) {
+	var p Project
+	var created time.Time
+	err := s.pool.QueryRow(ctx,
+		`INSERT INTO projects (name, owner_id) VALUES ($1, $2)
+		 RETURNING id, name, owner_id, created_at`, name, ownerID,
+	).Scan(&p.ID, &p.Name, &p.OwnerID, &created)
+	if err != nil {
+		return Project{}, fmt.Errorf("store: create project: %w", err)
+	}
+	p.CreatedAt = created.Format(time.RFC3339)
+	return p, nil
+}
+
+// ListProjects returns every project owned by ownerID, newest first.
+func (s *Store) ListProjects(ctx context.Context, ownerID string) ([]Project, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT id, name, owner_id, created_at FROM projects
+		 WHERE owner_id = $1 ORDER BY created_at DESC`, ownerID)
+	if err != nil {
+		return nil, fmt.Errorf("store: query projects: %w", err)
+	}
+	defer rows.Close()
+
+	var out []Project
+	for rows.Next() {
+		var p Project
+		var created time.Time
+		if err := rows.Scan(&p.ID, &p.Name, &p.OwnerID, &created); err != nil {
+			return nil, fmt.Errorf("store: scan project: %w", err)
+		}
+		p.CreatedAt = created.Format(time.RFC3339)
+		out = append(out, p)
+	}
+	return out, rows.Err()
 }

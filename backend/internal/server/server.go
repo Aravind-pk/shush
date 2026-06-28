@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 	shushv1 "github.com/Aravind-pk/shush/backend/gen/shush/v1"
 	"github.com/Aravind-pk/shush/backend/gen/shush/v1/shushv1connect"
+	"github.com/Aravind-pk/shush/backend/internal/auth"
 	"github.com/Aravind-pk/shush/backend/internal/store"
 )
 
@@ -21,23 +22,70 @@ type Server struct {
 	shushv1connect.UnimplementedShushServiceHandler
 
 	store *store.Store
-
-	// demoUserID is used as secrets.created_by until auth supplies a real
-	// caller identity. Temporary scaffolding, removed once Register lands.
-	demoUserID string
 }
 
-// New returns a Server backed by the given store. demoUserID is the user id
-// recorded as the author of writes until the auth layer exists.
-func New(st *store.Store, demoUserID string) *Server {
-	return &Server{store: st, demoUserID: demoUserID}
+// New returns a Server backed by the given store. Identity comes from the
+// Clerk auth interceptor on each request, so no user is injected here.
+func New(st *store.Store) *Server {
+	return &Server{store: st}
 }
 
-// ListSecrets returns every secret for a given project + environment, fetched
-// from PostgreSQL and decrypted via the store's envelope encryption.
+// callerUserID resolves the authenticated Clerk user (set by the interceptor)
+// to our internal user UUID, creating the user row on first sight.
+func (s *Server) callerUserID(ctx context.Context) (string, error) {
+	clerkUserID, ok := auth.UserID(ctx)
+	if !ok {
+		return "", connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
+	}
+	userID, err := s.store.EnsureUser(ctx, clerkUserID)
+	if err != nil {
+		return "", connect.NewError(connect.CodeInternal, err)
+	}
+	return userID, nil
+}
+
+// CreateProject creates a project owned by the authenticated user.
+func (s *Server) CreateProject(ctx context.Context, req *connect.Request[shushv1.CreateProjectRequest]) (*connect.Response[shushv1.CreateProjectResponse], error) {
+	userID, err := s.callerUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if req.Msg.GetName() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("name is required"))
+	}
+
+	p, err := s.store.CreateProject(ctx, userID, req.Msg.GetName())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&shushv1.CreateProjectResponse{Project: toProtoProject(p)}), nil
+}
+
+// ListProjects returns the authenticated user's projects.
+func (s *Server) ListProjects(ctx context.Context, _ *connect.Request[shushv1.ListProjectsRequest]) (*connect.Response[shushv1.ListProjectsResponse], error) {
+	userID, err := s.callerUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	projects, err := s.store.ListProjects(ctx, userID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	out := make([]*shushv1.Project, 0, len(projects))
+	for _, p := range projects {
+		out = append(out, toProtoProject(p))
+	}
+	return connect.NewResponse(&shushv1.ListProjectsResponse{Projects: out}), nil
+}
+
+// ListSecrets returns every secret for a project + environment, decrypted.
 //
-// Still TODO: auth check on the caller's project access, and an audit entry.
+// Still TODO: verify the project belongs to the caller, and write an audit entry.
 func (s *Server) ListSecrets(ctx context.Context, req *connect.Request[shushv1.ListSecretsRequest]) (*connect.Response[shushv1.ListSecretsResponse], error) {
+	if _, err := s.callerUserID(ctx); err != nil {
+		return nil, err
+	}
 	projectID := req.Msg.GetProjectId()
 	env := req.Msg.GetEnvironment()
 	if projectID == "" || env == "" {
@@ -63,20 +111,31 @@ func (s *Server) ListSecrets(ctx context.Context, req *connect.Request[shushv1.L
 	return connect.NewResponse(&shushv1.ListSecretsResponse{Secrets: out}), nil
 }
 
-// PutSecret encrypts and upserts a secret, returning its id and new version.
+// PutSecret encrypts and upserts a secret, attributed to the caller.
 //
-// Still TODO: auth check + audit entry; created_by is the demo user for now.
+// Still TODO: verify the project belongs to the caller, and write an audit entry.
 func (s *Server) PutSecret(ctx context.Context, req *connect.Request[shushv1.PutSecretRequest]) (*connect.Response[shushv1.PutSecretResponse], error) {
+	userID, err := s.callerUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	m := req.Msg
 	if m.GetProjectId() == "" || m.GetEnvironment() == "" || m.GetKey() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument,
 			errors.New("project_id, environment, and key are required"))
 	}
 
-	id, version, err := s.store.PutSecret(ctx, m.GetProjectId(), m.GetEnvironment(), m.GetKey(), m.GetValue(), s.demoUserID)
+	id, version, err := s.store.PutSecret(ctx, m.GetProjectId(), m.GetEnvironment(), m.GetKey(), m.GetValue(), userID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-
 	return connect.NewResponse(&shushv1.PutSecretResponse{Id: id, Version: version}), nil
+}
+
+func toProtoProject(p store.Project) *shushv1.Project {
+	return &shushv1.Project{
+		Id:        p.ID,
+		Name:      p.Name,
+		CreatedAt: p.CreatedAt,
+	}
 }

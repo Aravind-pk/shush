@@ -20,10 +20,9 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       MASTER_KEK: ${MASTER_KEK}
-      JWT_SECRET: ${JWT_SECRET}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
     ports:
-      - "8080:8080" # gRPC-Gateway REST
-      - "9090:9090" # gRPC
+      - "8080:8080" # Connect: gRPC + gRPC-Web + HTTP/JSON
     depends_on:
       postgres:
         condition: service_healthy

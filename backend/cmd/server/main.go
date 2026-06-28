@@ -15,10 +15,13 @@ import (
 	"syscall"
 	"time"
 
+	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
 	"github.com/Aravind-pk/shush/backend/gen/shush/v1/shushv1connect"
+	"github.com/Aravind-pk/shush/backend/internal/auth"
 	"github.com/Aravind-pk/shush/backend/internal/server"
 	"github.com/Aravind-pk/shush/backend/internal/store"
+	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/joho/godotenv"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -40,6 +43,14 @@ func main() {
 	}
 	kek := []byte(os.Getenv("MASTER_KEK"))
 
+	clerkKey := os.Getenv("CLERK_SECRET_KEY")
+	if clerkKey == "" {
+		log.Fatal("CLERK_SECRET_KEY is required (verifies Clerk session tokens)")
+	}
+	// Configure the Clerk SDK globally so the auth interceptor's jwt.Verify can
+	// fetch and cache Clerk's JWKS to validate session tokens.
+	clerk.SetKey(clerkKey)
+
 	// Open the Postgres store (pgx pool). Use a bounded context so a dead DB
 	// fails fast at boot instead of hanging.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -50,17 +61,13 @@ func main() {
 	}
 	defer st.Close()
 
-	// Bootstrap demo user + project so the secret RPCs have valid FKs to use
-	// before the auth/projects RPCs exist. Logs the project id to use.
-	demoUserID, demoProjectID, err := st.EnsureDemoData(ctx)
-	if err != nil {
-		log.Fatalf("seed demo data: %v", err)
-	}
-	log.Printf("demo project id: %s (use this as project_id)", demoProjectID)
-
 	mux := http.NewServeMux()
 
-	path, handler := shushv1connect.NewShushServiceHandler(server.New(st, demoUserID))
+	// Every RPC is guarded by the Clerk auth interceptor.
+	path, handler := shushv1connect.NewShushServiceHandler(
+		server.New(st),
+		connect.WithInterceptors(auth.NewInterceptor()),
+	)
 	mux.Handle(path, handler)
 
 	reflector := grpcreflect.NewStaticReflector(shushv1connect.ShushServiceName)

@@ -54,7 +54,7 @@
 @layer components {
   /* page gutter, matches the 1280px design frame */
   .container-px {
-    @apply mx-auto w-full max-w-[1280px] px-10;
+    @apply mx-auto w-full max-w-[1280px] px-5 sm:px-8 lg:px-10;
   }
 
   /* the standard panel: faint top-lit gradient + hairline */
@@ -74,7 +74,7 @@
     @apply mb-3.5 text-sm font-semibold tracking-[0.02em];
   }
   .h-section {
-    @apply text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-heading;
+    @apply text-[28px] font-extrabold leading-[1.12] tracking-[-0.025em] text-heading sm:text-[34px] lg:text-[40px];
   }
 
   /* terminal frame */
@@ -85,7 +85,7 @@
     @apply flex items-center gap-2 border-b border-hair px-4 py-3;
   }
   .term-body {
-    @apply px-5 py-5 font-mono text-[13.5px] leading-[2.05];
+    @apply overflow-x-auto px-5 py-5 font-mono text-[13.5px] leading-[2.05];
   }
 
   /* buttons */

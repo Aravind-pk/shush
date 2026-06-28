@@ -10,13 +10,16 @@ const principles = [
 ---
 
 <section id="self-hosting" class="container-px my-[30px] scroll-mt-24">
-  <div class="card grid overflow-hidden sm:grid-cols-2 lg:grid-cols-4">
+  <div
+    class="card grid divide-y divide-hair overflow-hidden sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4"
+  >
     {
-      principles.map((s, i) => (
+      principles.map((s) => (
         <div
           class:list={[
             "flex flex-col gap-2 p-[30px]",
-            i < principles.length - 1 && "lg:border-r border-hair",
+            "border-hair sm:border-b sm:odd:border-r sm:[&:nth-last-child(-n+2)]:border-b-0",
+            "lg:border-b-0 lg:border-r lg:last:border-r-0",
           ]}
         >
           <Icon name={s.icon} width={22} height={22} style="color:#f6912b" />

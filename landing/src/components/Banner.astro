@@ -1,0 +1,14 @@
+---
+import { Icon } from "astro-icon/components";
+
+// Temporary "we're still building" notice. Remove this component (and its use
+// in index.astro) once the site is launch-ready.
+---
+
+<div
+  class="flex items-center justify-center gap-2 px-4 py-2 text-center text-[13px] font-semibold text-ink"
+  style="background:linear-gradient(90deg,#f5c518,#f5841f 55%,#ef5d83)"
+>
+  <Icon name="lucide:construction" width={15} height={15} />
+  <span>Work in progress — we're still building Shush. Expect things to change.</span>
+</div>

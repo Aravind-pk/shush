@@ -1,0 +1,50 @@
+---
+import { Icon } from "astro-icon/components";
+import SectionHeading from "./SectionHeading.astro";
+
+const problems = [
+  {
+    icon: "lucide:eye",
+    title: "Agents read every file",
+    desc: "Cursor, Claude Code and Copilot index your whole working tree to build context. Your .env is just another file to them — .gitignore doesn't apply.",
+  },
+  {
+    icon: "lucide:scroll-text",
+    title: "Secrets leak into logs",
+    desc: "Once read, keys flow into chain-of-thought traces, prompt caches and model logs running on infrastructure you don't own or control.",
+  },
+  {
+    icon: "lucide:copy",
+    title: ".env sprawl",
+    desc: "Dev .envs, test .envs, a copy on every laptop, pasted into chat for the new hire. Each one is a credential you can never fully revoke.",
+  },
+];
+---
+
+<section class="container-px pt-15 pb-[30px]">
+  <SectionHeading
+    eyebrow="THE PROBLEM"
+    eyebrowColor="#ef5d83"
+    title="Secrets on disk were always risky. Agents made it worse."
+    class="mb-[42px]"
+  />
+  <div class="grid gap-[18px] md:grid-cols-3">
+    {
+      problems.map((p) => (
+        <div
+          class="rounded-2xl border p-[26px]"
+          style="background:linear-gradient(180deg,#161214,#100f10);border-color:rgba(239,93,131,0.14)"
+        >
+          <div
+            class="mb-[18px] flex size-[42px] items-center justify-center rounded-[11px]"
+            style="background:rgba(239,93,131,0.12)"
+          >
+            <Icon name={p.icon} width={20} height={20} style="color:#ef5d83" />
+          </div>
+          <h3 class="mb-[9px] text-[18px] font-semibold text-soft">{p.title}</h3>
+          <p class="text-[14.5px] leading-[1.55] text-dim">{p.desc}</p>
+        </div>
+      ))
+    }
+  </div>
+</section>

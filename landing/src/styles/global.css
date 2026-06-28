@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+/*
+  Shush landing — brand design tokens.
+  A warm, high-contrast take on the product's dark theme: near-black canvas,
+  a gold→orange→pink accent ramp, Hanken Grotesk for display + JetBrains Mono
+  for anything that looks like code.
+*/
+@theme {
+  /* surfaces */
+  --color-ink: #0a0a0b; /* page canvas */
+  --color-surface: #141416; /* chips, subtle fills */
+  --color-term: #0c0c0e; /* terminal / code panels */
+
+  /* text */
+  --color-fg: #e9e9ec;
+  --color-heading: #fafafa;
+  --color-soft: #f4f4f6;
+  --color-muted: #9a9aa0;
+  --color-dim: #8a8a90;
+  --color-faint: #6a6a70;
+
+  /* hairline borders */
+  --color-hair: rgba(255, 255, 255, 0.07);
+  --color-hair-strong: rgba(255, 255, 255, 0.14);
+
+  /* brand accent ramp */
+  --color-brand-orange: #f5841f;
+  --color-brand-amber: #f6912b;
+  --color-brand-gold: #f5c518;
+  --color-brand-pink: #ef5d83;
+  --color-brand-purple: #b08ef0;
+  --color-brand-blue: #7b9ef0;
+  --color-brand-green: #3ddc84;
+  --color-brand-red: #f0484a;
+
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ink font-sans text-fg antialiased;
+  }
+  ::selection {
+    background: var(--color-brand-orange);
+    color: var(--color-ink);
+  }
+}
+
+@layer components {
+  /* page gutter, matches the 1280px design frame */
+  .container-px {
+    @apply mx-auto w-full max-w-[1280px] px-10;
+  }
+
+  /* the standard panel: faint top-lit gradient + hairline */
+  .card {
+    @apply rounded-2xl border border-hair;
+    background: linear-gradient(180deg, #131315, #0f0f11);
+  }
+  .card-hover {
+    @apply transition-colors duration-150;
+  }
+  .card-hover:hover {
+    border-color: rgba(245, 132, 31, 0.3);
+  }
+
+  /* section eyebrow + heading */
+  .eyebrow {
+    @apply mb-3.5 text-sm font-semibold tracking-[0.02em];
+  }
+  .h-section {
+    @apply text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-heading;
+  }
+
+  /* terminal frame */
+  .term {
+    @apply overflow-hidden rounded-2xl border border-hair-strong bg-term;
+  }
+  .term-bar {
+    @apply flex items-center gap-2 border-b border-hair px-4 py-3;
+  }
+  .term-body {
+    @apply px-5 py-5 font-mono text-[13.5px] leading-[2.05];
+  }
+
+  /* buttons */
+  .btn {
+    @apply inline-flex cursor-pointer items-center gap-2 rounded-[11px] text-[15px] font-semibold transition-colors duration-150;
+  }
+  .btn-light {
+    @apply bg-soft px-6 py-[13px] text-ink;
+  }
+  .btn-light:hover {
+    background: #fff;
+  }
+  .btn-ghost {
+    @apply border border-hair-strong px-6 py-[13px] text-fg;
+  }
+  .btn-ghost:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-hair bg-surface px-3.5 py-1.5;
+  }
+}

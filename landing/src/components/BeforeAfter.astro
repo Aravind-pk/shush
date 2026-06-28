@@ -1,0 +1,103 @@
+---
+import { Icon } from "astro-icon/components";
+
+const envFile = [
+  { key: "DATABASE_URL", val: "postgres://u:p@db.prod…" },
+  { key: "STRIPE_SECRET_KEY", val: "sk_live_4eC39Huak2…" },
+  { key: "JWT_SIGNING_KEY", val: "b7d3f0a1c9e84f12…" },
+  { key: "OPENAI_API_KEY", val: "sk-proj-9Xa2kQ…" },
+];
+const envBad = [
+  "Readable by every AI agent in your editor",
+  "Committed by accident, forever in git history",
+  "Pasted into Slack to onboard a teammate",
+  "Stale and un-revocable across laptops",
+];
+const shushTerm = [
+  { color: "#6a6a70", text: "$ shush run --env dev -- npm run dev" },
+  { color: "#3ddc84", text: "✓ 14 secrets injected into the process" },
+  { color: "#9a9aa0", text: "  env vars live in memory only" },
+  { color: "#b08ef0", text: "  ↳ every read written to the audit log" },
+];
+const shushGood = [
+  "Injected at process start, in memory only",
+  "Nothing on disk for an agent to read",
+  "Granted per project, env and person",
+  "Revoke once — every copy dies with it",
+];
+---
+
+<section class="container-px my-[30px]">
+  <div class="grid gap-[18px] md:grid-cols-2">
+    {/* liability */}
+    <div
+      class="overflow-hidden rounded-[18px] border"
+      style="background:linear-gradient(180deg,#141012,#0e0d0e);border-color:rgba(239,93,131,0.16)"
+    >
+      <div class="flex items-center justify-between border-b border-hair px-[22px] py-[18px]">
+        <span class="flex items-center gap-2.5 font-mono text-[13.5px] text-[#cfcfd5]">
+          <Icon name="lucide:file-warning" width={16} height={16} style="color:#ef5d83" />
+          .env
+        </span>
+        <span
+          class="rounded-md px-2.5 py-[3px] text-[11.5px] font-semibold tracking-[0.03em]"
+          style="color:#ff7a7c;background:rgba(240,72,74,0.13)"
+        >
+          ON DISK · LIABILITY
+        </span>
+      </div>
+      <div class="px-[22px] py-[18px] font-mono text-[12.5px] leading-[1.95]">
+        {
+          envFile.map((e) => (
+            <div>
+              <span style="color:#7b9ef0">{e.key}</span><span style="color:#5a5a60">=</span
+              ><span style="color:#ef5d83">{e.val}</span>
+            </div>
+          ))
+        }
+      </div>
+      <div class="flex flex-col gap-[9px] px-[22px] pt-1.5 pb-[22px]">
+        {
+          envBad.map((b) => (
+            <div class="flex items-center gap-2.5 text-[13px] text-muted">
+              <Icon name="lucide:x" width={15} height={15} style="color:#ff7a7c" />
+              {b}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    {/* shush */}
+    <div
+      class="overflow-hidden rounded-[18px] border"
+      style="background:linear-gradient(180deg,#0f1411,#0d100e);border-color:rgba(61,220,132,0.18)"
+    >
+      <div class="flex items-center justify-between border-b border-hair px-[22px] py-[18px]">
+        <span class="flex items-center gap-2.5 font-mono text-[13.5px] text-[#cfcfd5]">
+          <Icon name="lucide:terminal" width={16} height={16} style="color:#3ddc84" />
+          shush run
+        </span>
+        <span
+          class="rounded-md px-2.5 py-[3px] text-[11.5px] font-semibold tracking-[0.03em]"
+          style="color:#3ddc84;background:rgba(61,220,132,0.12)"
+        >
+          IN MEMORY · AUDITED
+        </span>
+      </div>
+      <div class="px-[22px] py-[18px] font-mono text-[12.5px] leading-[1.95]">
+        {shushTerm.map((t) => <div style={`color:${t.color}`}>{t.text}</div>)}
+      </div>
+      <div class="flex flex-col gap-[9px] px-[22px] pt-1.5 pb-[22px]">
+        {
+          shushGood.map((g) => (
+            <div class="flex items-center gap-2.5 text-[13px] text-[#cfcfd5]">
+              <Icon name="lucide:check" width={15} height={15} style="color:#3ddc84" />
+              {g}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

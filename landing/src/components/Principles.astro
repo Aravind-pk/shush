@@ -1,0 +1,29 @@
+---
+import { Icon } from "astro-icon/components";
+
+const principles = [
+  { icon: "lucide:cpu", val: "In memory", label: "never written to disk" },
+  { icon: "lucide:scroll-text", val: "Audited", label: "every single read" },
+  { icon: "lucide:server", val: "Self-hosted", label: "on your own infra" },
+  { icon: "lucide:git-branch", val: "Open source", label: "Apache-2.0 licensed" },
+];
+---
+
+<section id="self-hosting" class="container-px my-[30px] scroll-mt-24">
+  <div class="card grid overflow-hidden sm:grid-cols-2 lg:grid-cols-4">
+    {
+      principles.map((s, i) => (
+        <div
+          class:list={[
+            "flex flex-col gap-2 p-[30px]",
+            i < principles.length - 1 && "lg:border-r border-hair",
+          ]}
+        >
+          <Icon name={s.icon} width={22} height={22} style="color:#f6912b" />
+          <div class="mt-1 text-[17px] font-bold text-heading">{s.val}</div>
+          <div class="text-[13px] text-dim">{s.label}</div>
+        </div>
+      ))
+    }
+  </div>
+</section>

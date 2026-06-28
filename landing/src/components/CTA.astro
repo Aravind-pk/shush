@@ -1,0 +1,33 @@
+---
+import { Icon } from "astro-icon/components";
+import { GITHUB_URL, DOCS_URL } from "../config";
+---
+
+<section class="container-px mt-[60px]">
+  <div
+    class="relative overflow-hidden rounded-[20px] border px-10 py-16 text-center"
+    style="background:linear-gradient(180deg,#15110d,#0e0e10);border-color:rgba(245,132,31,0.18)"
+  >
+    <div
+      class="pointer-events-none absolute -top-[60px] left-1/2 h-[200px] w-[400px] -translate-x-1/2 blur-[20px]"
+      style="background:radial-gradient(ellipse,rgba(245,132,31,0.2),transparent 70%)"
+    >
+    </div>
+    <h2 class="relative text-[42px] font-extrabold tracking-[-0.025em] text-heading">
+      Get your secrets off disk.
+    </h2>
+    <p class="relative mx-auto mt-3.5 max-w-[460px] text-[17px] text-muted">
+      Open source and self-hosted. Clone it, run it on your own infra, and stop
+      shipping <span class="font-mono text-[#cfcfd5]">.env</span> files around.
+    </p>
+    <div class="relative mt-[30px] flex flex-wrap justify-center gap-3.5">
+      <a href={GITHUB_URL} class="btn btn-light !px-7">
+        <Icon name="lucide:star" width={17} height={17} />
+        Go to GitHub
+      </a>
+      <a href={DOCS_URL} class="btn btn-ghost !px-7" style="background:transparent">
+        Read the docs
+      </a>
+    </div>
+  </div>
+</section>

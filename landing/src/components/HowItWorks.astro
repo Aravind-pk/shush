@@ -1,0 +1,54 @@
+---
+import { Icon } from "astro-icon/components";
+import SectionHeading from "./SectionHeading.astro";
+
+const steps = [
+  {
+    n: "1",
+    icon: "lucide:database",
+    title: "Store in Shush",
+    desc: "Secrets live encrypted (AES-256-GCM) per project and environment, versioned with full history — never in a file.",
+  },
+  {
+    n: "2",
+    icon: "lucide:terminal",
+    title: "Run with shush",
+    desc: "shush run fetches the secrets your process is allowed to see and injects them as environment variables at launch.",
+  },
+  {
+    n: "3",
+    icon: "lucide:wind",
+    title: "Gone when it exits",
+    desc: "They live in memory for the life of the process and vanish when it stops. Every fetch is authorised and audited.",
+  },
+];
+---
+
+<section id="how-it-works" class="container-px my-[50px] scroll-mt-24">
+  <SectionHeading
+    eyebrow="HOW IT WORKS"
+    eyebrowColor="#f6912b"
+    title="Don't store secrets on disk. Fetch them at runtime."
+    maxWidth={620}
+    class="mb-[42px]"
+  />
+  <div class="grid gap-[18px] md:grid-cols-3">
+    {
+      steps.map((s) => (
+        <div class="card p-[28px]">
+          <div class="mb-[18px] flex items-center gap-3">
+            <span
+              class="flex size-[30px] items-center justify-center rounded-[9px] font-mono text-[14px] font-semibold text-ink"
+              style="background:linear-gradient(120deg,#f6912b,#f5c518)"
+            >
+              {s.n}
+            </span>
+            <Icon name={s.icon} width={20} height={20} style="color:#9a9aa0" />
+          </div>
+          <h3 class="mb-[9px] text-[18px] font-semibold text-soft">{s.title}</h3>
+          <p class="text-[14.5px] leading-[1.55] text-dim">{s.desc}</p>
+        </div>
+      ))
+    }
+  </div>
+</section>

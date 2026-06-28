@@ -1,0 +1,45 @@
+---
+import { Icon } from "astro-icon/components";
+import Logo from "./Logo.astro";
+import { GITHUB_URL, DOCS_URL } from "../config";
+
+// Honest nav for an OSS, self-hosted product: no "Pricing", links point at
+// real sections / destinations.
+const links = [
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Features", href: "#features" },
+  { label: "Self-hosting", href: "#self-hosting" },
+];
+
+const HOME = import.meta.env.BASE_URL;
+---
+
+<nav
+  class="sticky top-0 z-50 flex items-center justify-between border-b border-hair px-10 py-[18px] backdrop-blur-md"
+  style="background:rgba(10,10,11,0.8)"
+>
+  <div class="flex items-center gap-[42px]">
+    <a href={HOME} aria-label="Shush home"><Logo /></a>
+    <div class="hidden gap-7 md:flex">
+      {
+        links.map((l) => (
+          <a
+            href={l.href}
+            class="text-[14.5px] text-muted transition-colors hover:text-white"
+          >
+            {l.label}
+          </a>
+        ))
+      }
+    </div>
+  </div>
+  <div class="flex items-center gap-[18px]">
+    <a href={DOCS_URL} class="text-[14.5px] text-[#c9c9cf] transition-colors hover:text-white">
+      Docs
+    </a>
+    <a href={GITHUB_URL} class="btn btn-ghost !rounded-[10px] !px-4 !py-2 !text-sm bg-surface">
+      <Icon name="lucide:star" width={15} height={15} />
+      Star on GitHub
+    </a>
+  </div>
+</nav>

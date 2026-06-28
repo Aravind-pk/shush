@@ -1,0 +1,22 @@
+---
+interface Props {
+  eyebrow: string;
+  eyebrowColor: string;
+  title: string;
+  maxWidth?: number;
+  class?: string;
+}
+
+const {
+  eyebrow,
+  eyebrowColor,
+  title,
+  maxWidth = 640,
+  class: className = "",
+} = Astro.props;
+---
+
+<div class={className} style={`max-width:${maxWidth}px`}>
+  <div class="eyebrow" style={`color:${eyebrowColor}`}>{eyebrow}</div>
+  <h2 class="h-section" set:html={title} />
+</div>

@@ -1,0 +1,75 @@
+---
+import { Icon } from "astro-icon/components";
+import SectionHeading from "./SectionHeading.astro";
+
+const features = [
+  {
+    icon: "lucide:folder-tree",
+    iconColor: "#b08ef0",
+    iconBg: "rgba(123,84,196,0.13)",
+    title: "Projects & environments",
+    desc: "Secrets isolated per project across dev, staging and prod. Promote between environments without copy-paste.",
+  },
+  {
+    icon: "lucide:lock",
+    iconColor: "#3ddc84",
+    iconBg: "rgba(61,220,132,0.13)",
+    title: "Encrypted & versioned",
+    desc: "AES-256-GCM at rest, every change versioned with author and timestamp, and one-click rollback.",
+  },
+  {
+    icon: "lucide:users",
+    iconColor: "#7b9ef0",
+    iconBg: "rgba(74,120,196,0.16)",
+    title: "Groups & RBAC",
+    desc: "Grant groups or people access scoped per environment. Owner, Admin, Editor, Viewer — enforced on every call.",
+  },
+  {
+    icon: "lucide:scroll-text",
+    iconColor: "#f6912b",
+    iconBg: "rgba(246,145,43,0.13)",
+    title: "Every access audited",
+    desc: "Read, write and delete events with actor, source, IP and result. Filter, drill in, export for compliance.",
+  },
+  {
+    icon: "lucide:terminal",
+    iconColor: "#f5c518",
+    iconBg: "rgba(245,197,24,0.13)",
+    title: "CLI, SDK & gRPC",
+    desc: "shush run for any runtime, native SDKs, and scoped service tokens for CI and machine identities.",
+  },
+  {
+    icon: "lucide:server",
+    iconColor: "#ef5d83",
+    iconBg: "rgba(239,93,131,0.13)",
+    title: "Self-hosted",
+    desc: "Runs entirely on your infrastructure — Clerk-backed auth, your Postgres, your keys. Secrets never leave your network.",
+  },
+];
+---
+
+<section id="features" class="container-px py-[50px] scroll-mt-24">
+  <SectionHeading
+    eyebrow="A REAL SECRET MANAGER UNDERNEATH"
+    eyebrowColor="#7b9ef0"
+    title="Runtime injection, backed by everything you'd expect."
+    maxWidth={620}
+    class="mb-[46px]"
+  />
+  <div class="grid gap-[18px] md:grid-cols-2 lg:grid-cols-3">
+    {
+      features.map((f) => (
+        <div class="card card-hover p-[26px]">
+          <div
+            class="mb-[18px] flex size-[42px] items-center justify-center rounded-[11px]"
+            style={`background:${f.iconBg}`}
+          >
+            <Icon name={f.icon} width={20} height={20} style={`color:${f.iconColor}`} />
+          </div>
+          <h3 class="mb-[9px] text-[18px] font-semibold text-soft">{f.title}</h3>
+          <p class="text-[14.5px] leading-[1.55] text-dim">{f.desc}</p>
+        </div>
+      ))
+    }
+  </div>
+</section>

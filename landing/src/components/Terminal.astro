@@ -1,0 +1,36 @@
+---
+interface Line {
+  color: string;
+  text: string;
+}
+
+interface Props {
+  label: string;
+  lines: Line[];
+  ellipsis?: boolean;
+  class?: string;
+}
+
+const { label, lines, ellipsis = false, class: className = "" } = Astro.props;
+const dots = ["#f0484a", "#f5c518", "#3ddc84"];
+---
+
+<div class={`term ${className}`}>
+  <div class="term-bar">
+    {dots.map((c) => <span class="size-[11px] rounded-full" style={`background:${c}`} />)}
+    <span class="ml-2.5 font-mono text-[12.5px] text-faint">{label}</span>
+  </div>
+  <div class="term-body">
+    {
+      lines.map((l) => (
+        <div
+          class={ellipsis ? "overflow-hidden text-ellipsis whitespace-nowrap" : "whitespace-nowrap"}
+          style={`color:${l.color}`}
+        >
+          {l.text}
+        </div>
+      ))
+    }
+  </div>
+  <slot />
+</div>

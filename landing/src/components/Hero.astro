@@ -1,0 +1,98 @@
+---
+import { Icon } from "astro-icon/components";
+import Terminal from "./Terminal.astro";
+import { GITHUB_URL, DOCS_URL } from "../config";
+
+const term = [
+  { color: "#6a6a70", text: "$ shush run --env dev -- npm run dev" },
+  { color: "#3ddc84", text: "✓ authenticated · maya@acme.dev" },
+  { color: "#3ddc84", text: "✓ fetched 14 secrets · payments-api/dev" },
+  { color: "#9a9aa0", text: "  injected as env vars → child process" },
+  { color: "#ef5d83", text: "  ✗ 0 secrets written to disk" },
+  { color: "#b08ef0", text: "  ↳ 14 reads logged to audit trail" },
+  { color: "#dcdce0", text: "▸ ready on http://localhost:3000" },
+];
+const chips = ["memory only", "no .env", "agent-safe"];
+const guarantees = ["Self-hosted", "Open source", "Every read audited"];
+---
+
+<section
+  class="container-px grid items-center gap-[54px] pt-[74px] pb-14 lg:grid-cols-[1fr_1.08fr]"
+>
+  <div>
+    <div class="pill mb-[26px]">
+      <span class="size-1.5 rounded-full bg-brand-amber"></span>
+      <span class="text-[13px] text-[#b9b9bf]">
+        Built for the AI-agent era · no .env on disk
+      </span>
+    </div>
+
+    <h1
+      class="text-[44px] font-extrabold leading-[1.02] tracking-[-0.035em] text-heading sm:text-[60px]"
+    >
+      Your <span class="font-mono text-[0.87em] font-bold">.env</span> file<br />
+      is a <span
+        class="bg-clip-text text-transparent"
+        style="background-image:linear-gradient(100deg,#ef5d83,#f6912b 60%,#f5c518)"
+        >liability.</span
+      >
+    </h1>
+
+    <p class="mt-6 max-w-[500px] text-[18px] leading-[1.62] text-muted">
+      Cursor, Claude Code and Copilot read every file in your project — they
+      don't respect <span class="font-mono text-[15px] text-[#cfcfd5]">.gitignore</span
+      >, and your keys end up in chain-of-thought logs on infra you don't
+      control. Shush fetches secrets at runtime and injects them straight into
+      the process. Memory only. Never written to disk.
+    </p>
+
+    <div class="mt-[34px] flex flex-wrap gap-3.5">
+      <a href={GITHUB_URL} class="btn btn-light">
+        <Icon name="lucide:star" width={17} height={17} />
+        Go to GitHub
+      </a>
+      <a href={DOCS_URL} class="btn btn-ghost bg-surface">
+        <Icon name="lucide:book-open" width={16} height={16} />
+        Read the docs
+      </a>
+    </div>
+
+    <div class="mt-6 flex flex-wrap items-center gap-[18px] text-[13.5px] text-faint">
+      {
+        guarantees.map((g) => (
+          <span class="flex items-center gap-1.5">
+            <Icon name="lucide:check" width={14} height={14} style="color:#3ddc84" />
+            {g}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="relative">
+    <div
+      class="pointer-events-none absolute -inset-10 blur-[20px]"
+      style="background:radial-gradient(circle at 60% 40%,rgba(245,132,31,0.14),transparent 60%)"
+    >
+    </div>
+    <Terminal
+      label="~/payments-api"
+      lines={term}
+      class="relative shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+    >
+      <div class="flex flex-wrap gap-2 px-[22px] pb-5">
+        {
+          chips.map((c) => (
+            <span
+              class="inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-[5px] font-mono text-[12px] text-brand-green"
+              style="background:rgba(61,220,132,0.1);border-color:rgba(61,220,132,0.2)"
+            >
+              <Icon name="lucide:check" width={12} height={12} />
+              {c}
+            </span>
+          ))
+        }
+      </div>
+    </Terminal>
+  </div>
+</section>

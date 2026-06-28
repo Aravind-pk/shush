@@ -18,6 +18,8 @@ import (
 	"connectrpc.com/grpcreflect"
 	"github.com/Aravind-pk/shush/backend/gen/shush/v1/shushv1connect"
 	"github.com/Aravind-pk/shush/backend/internal/server"
+	"github.com/Aravind-pk/shush/backend/internal/store"
+	"github.com/joho/godotenv"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -26,9 +28,39 @@ func main() {
 	addr := flag.String("addr", ":8080", "HTTP listen address")
 	flag.Parse()
 
+	// Load .env if present (dev convenience). Each path is tried independently
+	// so it works whether run from the repo root or from backend/ (via air).
+	// godotenv never overrides vars already set in the real environment.
+	_ = godotenv.Load(".env")
+	_ = godotenv.Load("../.env")
+
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL is required")
+	}
+	kek := []byte(os.Getenv("MASTER_KEK"))
+
+	// Open the Postgres store (pgx pool). Use a bounded context so a dead DB
+	// fails fast at boot instead of hanging.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	st, err := store.New(ctx, dsn, kek)
+	if err != nil {
+		log.Fatalf("store: %v", err)
+	}
+	defer st.Close()
+
+	// Bootstrap demo user + project so the secret RPCs have valid FKs to use
+	// before the auth/projects RPCs exist. Logs the project id to use.
+	demoUserID, demoProjectID, err := st.EnsureDemoData(ctx)
+	if err != nil {
+		log.Fatalf("seed demo data: %v", err)
+	}
+	log.Printf("demo project id: %s (use this as project_id)", demoProjectID)
+
 	mux := http.NewServeMux()
 
-	path, handler := shushv1connect.NewShushServiceHandler(server.New())
+	path, handler := shushv1connect.NewShushServiceHandler(server.New(st, demoUserID))
 	mux.Handle(path, handler)
 
 	reflector := grpcreflect.NewStaticReflector(shushv1connect.ShushServiceName)
